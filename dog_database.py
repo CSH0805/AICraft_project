@@ -1,119 +1,118 @@
-# dog_database.py
+# dog_database.py (업데이트된 버전)
 DOG_BREEDS = {
     "골든 리트리버": {
         "name": "골든 리트리버",
         "description": "온순하고 친근한 성격의 대형견",
         "face_features": {
-            "face_width": "wide",      # 넓은 얼굴
-            "eye_shape": "round",      # 둥근 눈
-            "nose_size": "medium",     # 중간 크기 코
-            "mouth_width": "wide",     # 넓은 입
-            "face_length": "medium"    # 중간 길이 얼굴
+            "face_width": "wide",
+            "eye_shape": "round",
+            "nose_size": "medium",
+            "mouth_width": "wide",
+            "face_length": "medium"
         },
         "personality": ["친근함", "온순함", "활발함"],
-        "image": "golden_retriever.jpg"
+        "image": "golden_retriever.png"
     },
     
     "시바견": {
         "name": "시바견",
         "description": "도도하고 독립적인 성격의 일본 견종",
         "face_features": {
-            "face_width": "narrow",    # 좁은 얼굴
-            "eye_shape": "narrow",     # 좁은 눈 (여우상)
-            "nose_size": "small",      # 작은 코
-            "mouth_width": "small",    # 작은 입
-            "face_length": "long"      # 긴 얼굴
+            "face_width": "narrow",
+            "eye_shape": "narrow",
+            "nose_size": "small",
+            "mouth_width": "small",
+            "face_length": "long"
         },
         "personality": ["도도함", "독립적", "영리함"],
-        "image": "shiba_inu.jpg"
+        "image": "Shiba_Inu.png"
     },
     
     "푸들": {
         "name": "푸들",
         "description": "영리하고 우아한 성격의 곱슬모 견종",
         "face_features": {
-            "face_width": "medium",    # 중간 너비 얼굴
-            "eye_shape": "oval",       # 타원형 눈
-            "nose_size": "small",      # 작은 코
-            "mouth_width": "small",    # 작은 입
-            "face_length": "long"      # 긴 얼굴
+            "face_width": "medium",
+            "eye_shape": "oval",
+            "nose_size": "small",
+            "mouth_width": "small",
+            "face_length": "long"
         },
         "personality": ["영리함", "우아함", "활발함"],
-        "image": "poodle.jpg"
+        "image": "poodle.png"
     },
     
     "불독": {
         "name": "불독",
         "description": "묵직하고 차분한 성격의 단두종",
         "face_features": {
-            "face_width": "very_wide", # 매우 넓은 얼굴
-            "eye_shape": "round",      # 둥근 눈
-            "nose_size": "large",      # 큰 코 (낮고 넓음)
-            "mouth_width": "wide",     # 넓은 입
-            "face_length": "short"     # 짧은 얼굴
+            "face_width": "very_wide",
+            "eye_shape": "round",
+            "nose_size": "large",
+            "mouth_width": "wide",
+            "face_length": "short"
         },
         "personality": ["차분함", "묵직함", "충실함"],
-        "image": "bulldog.jpg"
+        "image": "bulldog.png"
     },
     
     "비글": {
         "name": "비글",
         "description": "호기심 많고 활발한 중형 사냥견",
         "face_features": {
-            "face_width": "medium",    # 중간 너비
-            "eye_shape": "round",      # 둥근 눈
-            "nose_size": "medium",     # 중간 크기 코
-            "mouth_width": "medium",   # 중간 크기 입
-            "face_length": "medium"    # 중간 길이
+            "face_width": "medium",
+            "eye_shape": "round",
+            "nose_size": "medium",
+            "mouth_width": "medium",
+            "face_length": "medium"
         },
         "personality": ["호기심", "활발함", "사교적"],
-        "image": "beagle.jpg"
+        "image": "beagle.png"
     },
     
     "치와와": {
         "name": "치와와",
         "description": "작지만 용감한 초소형 견종",
         "face_features": {
-            "face_width": "narrow",    # 좁은 얼굴
-            "eye_shape": "large",      # 큰 눈
-            "nose_size": "very_small", # 매우 작은 코
-            "mouth_width": "small",    # 작은 입
-            "face_length": "short"     # 짧은 얼굴
+            "face_width": "narrow",
+            "eye_shape": "large",
+            "nose_size": "very_small",
+            "mouth_width": "small",
+            "face_length": "short"
         },
         "personality": ["용감함", "경계심", "애교"],
-        "image": "chihuahua.jpg"
+        "image": "chihuahua.png"
     },
     
     "허스키": {
         "name": "시베리안 허스키",
         "description": "늑대 같은 외모의 활동적인 견종",
         "face_features": {
-            "face_width": "medium",    # 중간 너비
-            "eye_shape": "narrow",     # 좁은 눈 (늑대상)
-            "nose_size": "medium",     # 중간 코
-            "mouth_width": "medium",   # 중간 입
-            "face_length": "long"      # 긴 얼굴
+            "face_width": "medium",
+            "eye_shape": "narrow",
+            "nose_size": "medium",
+            "mouth_width": "medium",
+            "face_length": "long"
         },
         "personality": ["활동적", "독립적", "친근함"],
-        "image": "husky.jpg"
+        "image": "Siberian_Husky.png"
     },
     
     "라브라도": {
         "name": "라브라도 리트리버",
         "description": "충실하고 온화한 대형 가정견",
         "face_features": {
-            "face_width": "wide",      # 넓은 얼굴
-            "eye_shape": "round",      # 둥근 눈
-            "nose_size": "large",      # 큰 코
-            "mouth_width": "wide",     # 넓은 입
-            "face_length": "medium"    # 중간 길이
+            "face_width": "wide",
+            "eye_shape": "round",
+            "nose_size": "large",
+            "mouth_width": "wide",
+            "face_length": "medium"
         },
         "personality": ["충실함", "온화함", "사교적"],
-        "image": "labrador.jpg"
+        "image": "Labrador_Retriever.png"
     }
 }
 
-# 특징별 점수 매핑
 FEATURE_SCORES = {
     "face_width": {
         "very_wide": 5,
@@ -153,9 +152,7 @@ FEATURE_SCORES = {
 }
 
 def get_dog_info(breed_name):
-    """특정 강아지 품종 정보 반환"""
     return DOG_BREEDS.get(breed_name, None)
 
 def get_all_breeds():
-    """모든 강아지 품종 리스트 반환"""
     return list(DOG_BREEDS.keys())
