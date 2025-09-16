@@ -1,4 +1,4 @@
-from fastapi import FastAPI, UploadFile, File
+from fastapi import FastAPI, UploadFile, File, Query
 from fastapi.responses import JSONResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
@@ -8,7 +8,7 @@ import mediapipe as mp
 import math
 import os
 
-app = FastAPI(title="🐶 강아지 닮은 얼굴 찾기 API", version="2.0")
+app = FastAPI(title="🐶🐱 펫 닮은꼴 찾기 API", version="3.0")
 
 # CORS 설정
 app.add_middleware(
@@ -21,10 +21,12 @@ app.add_middleware(
 
 # 정적 파일 서빙
 if os.path.exists("dog_image"):
-    app.mount("/static", StaticFiles(directory="dog_image"), name="static")
+    app.mount("/static/dogs", StaticFiles(directory="dog_image"), name="dogs")
+if os.path.exists("cat_image"):
+    app.mount("/static/cats", StaticFiles(directory="cat_image"), name="cats")
 
 # =========================
-# 강아지 데이터베이스 (내장)
+# 강아지 데이터베이스
 # =========================
 DOG_BREEDS = {
     "골든 리트리버": {
@@ -32,56 +34,118 @@ DOG_BREEDS = {
         "description": "온순하고 친근한 성격의 대형견",
         "face_features": {"face_width": "wide", "eye_shape": "round", "nose_size": "medium", "mouth_width": "wide", "face_length": "medium"},
         "personality": ["친근함", "온순함", "활발함"],
-        "image": "/static/golden_retriever.png"
+        "image": "/static/dogs/golden_retriever.png"
     },
     "시바견": {
         "name": "시바견", 
         "description": "도도하고 독립적인 성격의 일본 견종",
         "face_features": {"face_width": "narrow", "eye_shape": "narrow", "nose_size": "small", "mouth_width": "small", "face_length": "long"},
         "personality": ["도도함", "독립적", "영리함"],
-        "image": "/static/Shiba_Inu.png"
+        "image": "/static/dogs/Shiba_Inu.png"
     },
     "푸들": {
         "name": "푸들",
         "description": "영리하고 우아한 성격의 곱슬모 견종", 
         "face_features": {"face_width": "medium", "eye_shape": "oval", "nose_size": "small", "mouth_width": "small", "face_length": "long"},
         "personality": ["영리함", "우아함", "활발함"],
-        "image": "/static/poodle.png"
+        "image": "/static/dogs/poodle.png"
     },
     "불독": {
         "name": "불독",
         "description": "묵직하고 차분한 성격의 단두종",
         "face_features": {"face_width": "very_wide", "eye_shape": "round", "nose_size": "large", "mouth_width": "wide", "face_length": "short"},
         "personality": ["차분함", "묵직함", "충실함"],
-        "image": "/static/bulldog.png"
+        "image": "/static/dogs/bulldog.png"
     },
     "비글": {
         "name": "비글",
         "description": "호기심 많고 활발한 중형 사냥견",
         "face_features": {"face_width": "medium", "eye_shape": "round", "nose_size": "medium", "mouth_width": "medium", "face_length": "medium"},
         "personality": ["호기심", "활발함", "사교적"],
-        "image": "/static/beagle.png"
+        "image": "/static/dogs/beagle.png"
     },
     "치와와": {
         "name": "치와와",
         "description": "작지만 용감한 초소형 견종",
         "face_features": {"face_width": "narrow", "eye_shape": "large", "nose_size": "very_small", "mouth_width": "small", "face_length": "short"},
         "personality": ["용감함", "경계심", "애교"],
-        "image": "/static/chihuahua.png"
+        "image": "/static/dogs/chihuahua.png"
     },
     "허스키": {
         "name": "시베리안 허스키",
         "description": "늑대 같은 외모의 활동적인 견종",
         "face_features": {"face_width": "medium", "eye_shape": "narrow", "nose_size": "medium", "mouth_width": "medium", "face_length": "long"},
         "personality": ["활동적", "독립적", "친근함"],
-        "image": "/static/Siberian_Husky.png"
+        "image": "/static/dogs/Siberian_Husky.png"
     },
     "라브라도": {
         "name": "라브라도 리트리버",
         "description": "충실하고 온화한 대형 가정견",
         "face_features": {"face_width": "wide", "eye_shape": "round", "nose_size": "large", "mouth_width": "wide", "face_length": "medium"},
         "personality": ["충실함", "온화함", "사교적"],
-        "image": "/static/Labrador_Retriever.png"
+        "image": "/static/dogs/Labrador_Retriever.png"
+    }
+}
+
+# =========================
+# 고양이 데이터베이스
+# =========================
+CAT_BREEDS = {
+    "페르시안": {
+        "name": "페르시안",
+        "description": "긴 털과 납작한 얼굴의 고급스러운 고양이",
+        "face_features": {"face_width": "very_wide", "eye_shape": "large", "nose_size": "very_small", "mouth_width": "small", "face_length": "short"},
+        "personality": ["온순함", "고급스러움", "조용함"],
+        "image": "/static/cats/persian.png"
+    },
+    "러시안 블루": {
+        "name": "러시안 블루",
+        "description": "우아하고 신비로운 회색 털의 고양이",
+        "face_features": {"face_width": "narrow", "eye_shape": "narrow", "nose_size": "small", "mouth_width": "small", "face_length": "long"},
+        "personality": ["신비로움", "우아함", "조용함"],
+        "image": "/static/cats/russian_blue.png"
+    },
+    "샴": {
+        "name": "샴",
+        "description": "말이 많고 사교적인 동양계 고양이",
+        "face_features": {"face_width": "narrow", "eye_shape": "narrow", "nose_size": "small", "mouth_width": "small", "face_length": "long"},
+        "personality": ["수다스러움", "사교적", "활발함"],
+        "image": "/static/cats/siamese.png"
+    },
+    "브리티시 숏헤어": {
+        "name": "브리티시 숏헤어",
+        "description": "둥글고 통통한 얼굴의 영국 고양이",
+        "face_features": {"face_width": "wide", "eye_shape": "round", "nose_size": "medium", "mouth_width": "medium", "face_length": "short"},
+        "personality": ["차분함", "독립적", "온순함"],
+        "image": "/static/cats/british_shorthair.png"
+    },
+    "메인쿤": {
+        "name": "메인쿤",
+        "description": "대형 크기의 온순한 장모 고양이",
+        "face_features": {"face_width": "wide", "eye_shape": "oval", "nose_size": "medium", "mouth_width": "medium", "face_length": "medium"},
+        "personality": ["온순함", "친근함", "장난기"],
+        "image": "/static/cats/maine_coon.png"
+    },
+    "아비시니안": {
+        "name": "아비시니안",
+        "description": "활발하고 호기심 많은 단모 고양이",
+        "face_features": {"face_width": "medium", "eye_shape": "large", "nose_size": "small", "mouth_width": "small", "face_length": "medium"},
+        "personality": ["호기심", "활발함", "영리함"],
+        "image": "/static/cats/abyssinian.png"
+    },
+    "랙돌": {
+        "name": "랙돌",
+        "description": "온순하고 포근한 대형 장모 고양이",
+        "face_features": {"face_width": "wide", "eye_shape": "large", "nose_size": "medium", "mouth_width": "medium", "face_length": "medium"},
+        "personality": ["온순함", "포근함", "느긋함"],
+        "image": "/static/cats/ragdoll.png"
+    },
+    "스핑크스": {
+        "name": "스핑크스",
+        "description": "털이 없는 독특한 외모의 고양이",
+        "face_features": {"face_width": "medium", "eye_shape": "large", "nose_size": "large", "mouth_width": "wide", "face_length": "long"},
+        "personality": ["활발함", "사교적", "독특함"],
+        "image": "/static/cats/sphynx.png"
     }
 }
 
@@ -210,32 +274,35 @@ def analyze_face_features(landmarks):
     
     return features
 
-def calculate_similarity(human_features, dog_features):
+def calculate_similarity(human_features, pet_features):
     weights = {"face_width": 0.25, "eye_shape": 0.25, "nose_size": 0.2, "mouth_width": 0.15, "face_length": 0.15}
     total_score = 0
     max_possible_score = 0
     
     for feature, weight in weights.items():
-        if feature in human_features and feature in dog_features:
+        if feature in human_features and feature in pet_features:
             human_score = FEATURE_SCORES.get(feature, {}).get(human_features[feature], 3)
-            dog_score = FEATURE_SCORES.get(feature, {}).get(dog_features[feature], 3)
-            diff = abs(human_score - dog_score)
+            pet_score = FEATURE_SCORES.get(feature, {}).get(pet_features[feature], 3)
+            diff = abs(human_score - pet_score)
             similarity = max(0, 5 - diff)
             total_score += similarity * weight
             max_possible_score += 5 * weight
     
     return (total_score / max_possible_score) * 100 if max_possible_score > 0 else 0
 
-def find_best_matches(human_features, top_n=3):
+def find_best_matches(human_features, pet_type="dog", top_n=3):
+    """펫 타입에 따라 다른 데이터베이스 사용"""
+    pet_database = DOG_BREEDS if pet_type == "dog" else CAT_BREEDS
     matches = []
-    for breed_name, breed_info in DOG_BREEDS.items():
-        dog_features = breed_info["face_features"]
-        similarity = calculate_similarity(human_features, dog_features)
+    
+    for breed_name, breed_info in pet_database.items():
+        pet_features = breed_info["face_features"]
+        similarity = calculate_similarity(human_features, pet_features)
         
         matching_features = []
         feature_names = {"face_width": "얼굴 너비", "eye_shape": "눈 모양", "nose_size": "코 크기", "mouth_width": "입 크기", "face_length": "얼굴 길이"}
         for feature, human_value in human_features.items():
-            if feature in dog_features and human_value == dog_features[feature]:
+            if feature in pet_features and human_value == pet_features[feature]:
                 matching_features.append(feature_names.get(feature, feature))
         
         matches.append({
@@ -250,7 +317,7 @@ def find_best_matches(human_features, top_n=3):
     matches.sort(key=lambda x: x["similarity"], reverse=True)
     return matches[:top_n]
 
-def get_face_analysis(features):
+def get_face_analysis(features, pet_type="dog"):
     width = features.get("face_width", "medium")
     length = features.get("face_length", "medium")
     
@@ -278,10 +345,16 @@ def get_face_analysis(features):
         dominant.append("넓은 입")
     
     recommendations = []
-    if width in ["wide", "very_wide"]:
-        recommendations.append("넓은 얼굴: 골든 리트리버, 불독, 라브라도와 잘 맞습니다")
-    elif width in ["narrow", "very_narrow"]:
-        recommendations.append("좁은 얼굴: 시바견, 치와와와 유사한 특징입니다")
+    if pet_type == "dog":
+        if width in ["wide", "very_wide"]:
+            recommendations.append("넓은 얼굴: 골든 리트리버, 불독, 라브라도와 잘 맞습니다")
+        elif width in ["narrow", "very_narrow"]:
+            recommendations.append("좁은 얼굴: 시바견, 치와와와 유사한 특징입니다")
+    else:  # cat
+        if width in ["wide", "very_wide"]:
+            recommendations.append("넓은 얼굴: 페르시안, 브리티시 숏헤어와 잘 맞습니다")
+        elif width in ["narrow", "very_narrow"]:
+            recommendations.append("좁은 얼굴: 러시안 블루, 샴과 유사한 특징입니다")
     
     return {
         "face_type": face_type,
@@ -298,7 +371,7 @@ def home():
     <!DOCTYPE html>
     <html>
     <head>
-        <title>🐶 강아지 닮은꼴 찾기</title>
+        <title>🐶🐱 펫 닮은꼴 찾기</title>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <style>
@@ -318,9 +391,36 @@ def home():
             }
             .header h1 { font-size: 2.5rem; margin-bottom: 10px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
             .content { padding: 40px; }
+            
+            /* 펫 선택 화면 */
+            .pet-selection {
+                text-align: center; margin-bottom: 30px;
+            }
+            .pet-selection h3 { margin-bottom: 30px; color: #333; font-size: 1.5rem; }
+            .pet-options {
+                display: flex; gap: 30px; justify-content: center; flex-wrap: wrap;
+            }
+            .pet-option {
+                background: white; border: 3px solid #e9ecef; border-radius: 20px;
+                padding: 30px; cursor: pointer; transition: all 0.3s ease;
+                box-shadow: 0 5px 15px rgba(0,0,0,0.1); min-width: 180px;
+            }
+            .pet-option:hover { 
+                border-color: #667eea; transform: translateY(-5px); 
+                box-shadow: 0 15px 35px rgba(102,126,234,0.2);
+            }
+            .pet-option.selected { 
+                border-color: #667eea; background: #f8f9ff; 
+                transform: translateY(-5px);
+            }
+            .pet-icon { font-size: 4rem; margin-bottom: 15px; }
+            .pet-name { font-size: 1.3rem; font-weight: bold; color: #333; margin-bottom: 8px; }
+            .pet-description { font-size: 0.9rem; color: #666; }
+            
             .upload-section {
                 border: 3px dashed #ddd; border-radius: 15px; padding: 40px;
                 text-align: center; margin: 30px 0; transition: all 0.3s ease; cursor: pointer;
+                display: none;
             }
             .upload-section:hover { border-color: #667eea; background-color: #f8f9ff; }
             .upload-section.dragover { border-color: #667eea; background-color: #f0f4ff; }
@@ -343,15 +443,15 @@ def home():
                 background: white; padding: 20px; border-radius: 15px; margin: 15px 0;
                 box-shadow: 0 5px 15px rgba(0,0,0,0.1);
             }
-            .dog-info { display: flex; gap: 20px; align-items: center; flex-wrap: wrap; }
-            .dog-image-container {
+            .pet-info { display: flex; gap: 20px; align-items: center; flex-wrap: wrap; }
+            .pet-image-container {
                 flex-shrink: 0; width: 120px; height: 120px; border-radius: 15px; overflow: hidden;
                 background: #f8f9fa; display: flex; align-items: center; justify-content: center;
                 box-shadow: 0 4px 12px rgba(0,0,0,0.1);
             }
-            .dog-image { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s ease; }
-            .dog-image:hover { transform: scale(1.1); }
-            .dog-details { flex: 1; min-width: 250px; }
+            .pet-image { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s ease; }
+            .pet-image:hover { transform: scale(1.1); }
+            .pet-details { flex: 1; min-width: 250px; }
             .breed-name { font-size: 1.4rem; font-weight: bold; margin-bottom: 8px; color: #333; }
             .breed-description { color: #666; margin-bottom: 12px; line-height: 1.4; }
             .similarity-bar { width: 100%; height: 20px; background: #e9ecef; border-radius: 10px; overflow: hidden; margin: 10px 0; }
@@ -377,53 +477,125 @@ def home():
                 background: #ffebee; color: #c62828; padding: 15px; border-radius: 8px;
                 margin: 20px 0; border-left: 4px solid #f44336;
             }
+            .reset-btn {
+                background: #6c757d; color: white; padding: 10px 20px; border: none;
+                border-radius: 20px; cursor: pointer; margin-bottom: 20px; transition: all 0.3s ease;
+            }
+            .reset-btn:hover { background: #5a6268; transform: translateY(-2px); }
         </style>
     </head>
     <body>
         <div class="container">
             <div class="header">
-                <h1>🐶 강아지 닮은꼴 찾기</h1>
-                <p>당신의 얼굴과 가장 닮은 강아지 품종을 찾아보세요!</p>
+                <h1>🐶🐱 펫 닮은꼴 찾기</h1>
+                <p>당신의 얼굴과 가장 닮은 강아지 또는 고양이 품종을 찾아보세요!</p>
             </div>
             
             <div class="content">
-                <div class="upload-section" onclick="document.getElementById('file-input').click()">
-                    <div>🖼️</div>
-                    <h3>사진을 업로드하세요</h3>
-                    <p>얼굴이 잘 보이는 사진을 선택해주세요 (JPG, PNG, WEBP 형식)</p>
-                    <br>
-                    <button class="upload-btn" type="button">파일 선택</button>
-                    <input type="file" id="file-input" accept="image/jpeg,image/jpg,image/png,image/webp">
-                    <img id="preview" class="preview-image" style="display: none;">
+                <!-- 펫 선택 화면 -->
+                <div class="pet-selection" id="pet-selection">
+                    <h3>어떤 동물과 비교하고 싶나요?</h3>
+                    <div class="pet-options">
+                        <div class="pet-option" data-pet="dog">
+                            <div class="pet-icon">🐶</div>
+                            <div class="pet-name">강아지</div>
+                            <div class="pet-description">8가지 견종과 비교</div>
+                        </div>
+                        <div class="pet-option" data-pet="cat">
+                            <div class="pet-icon">🐱</div>
+                            <div class="pet-name">고양이</div>
+                            <div class="pet-description">8가지 묘종과 비교</div>
+                        </div>
+                    </div>
                 </div>
-                
-                <div class="loading" id="loading">
-                    <div class="spinner"></div>
-                    <p>얼굴을 분석하고 있습니다...</p>
-                </div>
-                
-                <div id="error-container"></div>
-                
-                <div class="result-section" id="results">
-                    <h3>🎯 매칭 결과</h3>
-                    <div id="match-results"></div>
+
+                <!-- 업로드 화면 -->
+                <div id="upload-container">
+                    <button class="reset-btn" id="reset-btn" onclick="resetSelection()" style="display: none;">← 다시 선택하기</button>
+                    
+                    <div class="upload-section" id="upload-section" onclick="document.getElementById('file-input').click()">
+                        <div id="upload-icon">🖼️</div>
+                        <h3 id="upload-title">사진을 업로드하세요</h3>
+                        <p id="upload-description">얼굴이 잘 보이는 사진을 선택해주세요 (JPG, PNG, WEBP 형식)</p>
+                        <br>
+                        <button class="upload-btn" type="button">파일 선택</button>
+                        <input type="file" id="file-input" accept="image/jpeg,image/jpg,image/png,image/webp">
+                        <img id="preview" class="preview-image" style="display: none;">
+                    </div>
+                    
+                    <div class="loading" id="loading">
+                        <div class="spinner"></div>
+                        <p id="loading-text">얼굴을 분석하고 있습니다...</p>
+                    </div>
+                    
+                    <div id="error-container"></div>
+                    
+                    <div class="result-section" id="results">
+                        <h3 id="result-title">🎯 매칭 결과</h3>
+                        <div id="match-results"></div>
+                    </div>
                 </div>
                 
                 <div class="api-links">
                     <a href="/docs" class="api-btn">📖 API 문서</a>
-                    <a href="/breeds" class="api-btn">🐕 품종 목록</a>
+                    <a href="/breeds?type=dog" class="api-btn">🐕 강아지 품종</a>
+                    <a href="/breeds?type=cat" class="api-btn">🐱 고양이 품종</a>
                 </div>
             </div>
         </div>
 
         <script>
+            let selectedPetType = null;
+            
             const fileInput = document.getElementById('file-input');
             const preview = document.getElementById('preview');
             const loading = document.getElementById('loading');
             const results = document.getElementById('results');
             const matchResults = document.getElementById('match-results');
-            const uploadSection = document.querySelector('.upload-section');
+            const uploadSection = document.getElementById('upload-section');
             const errorContainer = document.getElementById('error-container');
+            const petSelection = document.getElementById('pet-selection');
+            const resetBtn = document.getElementById('reset-btn');
+
+            // 펫 선택 이벤트
+            document.querySelectorAll('.pet-option').forEach(option => {
+                option.addEventListener('click', function() {
+                    selectedPetType = this.dataset.pet;
+                    
+                    // 선택된 옵션 표시
+                    document.querySelectorAll('.pet-option').forEach(opt => opt.classList.remove('selected'));
+                    this.classList.add('selected');
+                    
+                    // 화면 전환
+                    setTimeout(() => {
+                        petSelection.style.display = 'none';
+                        uploadSection.style.display = 'block';
+                        resetBtn.style.display = 'inline-block';
+                        
+                        // 업로드 섹션 텍스트 업데이트
+                        const petEmoji = selectedPetType === 'dog' ? '🐶' : '🐱';
+                        const petName = selectedPetType === 'dog' ? '강아지' : '고양이';
+                        document.getElementById('upload-icon').textContent = petEmoji;
+                        document.getElementById('upload-title').textContent = `${petName} 닮은꼴 찾기`;
+                        document.getElementById('upload-description').textContent = `얼굴이 잘 보이는 사진을 업로드하면 ${petName} 품종과 비교해드려요!`;
+                    }, 300);
+                });
+            });
+
+            function resetSelection() {
+                selectedPetType = null;
+                petSelection.style.display = 'block';
+                uploadSection.style.display = 'none';
+                resetBtn.style.display = 'none';
+                results.style.display = 'none';
+                loading.style.display = 'none';
+                preview.style.display = 'none';
+                clearError();
+                
+                // 선택 초기화
+                document.querySelectorAll('.pet-option').forEach(opt => opt.classList.remove('selected'));
+                fileInput.value = '';
+            }
 
             // 드래그 앤 드롭 이벤트
             uploadSection.addEventListener('dragover', (e) => {
@@ -463,6 +635,11 @@ def home():
             }
 
             function handleFile(file) {
+                if (!selectedPetType) {
+                    showError('먼저 강아지 또는 고양이를 선택해주세요.');
+                    return;
+                }
+                
                 clearError();
                 
                 // 파일 유효성 검사
@@ -491,6 +668,9 @@ def home():
             }
 
             async function analyzePhoto(file) {
+                const petName = selectedPetType === 'dog' ? '강아지' : '고양이';
+                document.getElementById('loading-text').textContent = `${petName} 품종과 비교 분석 중...`;
+                
                 loading.style.display = 'block';
                 results.style.display = 'none';
 
@@ -498,7 +678,7 @@ def home():
                 formData.append('file', file);
 
                 try {
-                    const response = await fetch("/analyze-face", {
+                    const response = await fetch(`/analyze-face?pet_type=${selectedPetType}`, {
                         method: "POST",
                         body: formData
                     });
@@ -521,6 +701,10 @@ def home():
             }
 
             function displayResults(data) {
+                const petName = selectedPetType === 'dog' ? '강아지' : '고양이';
+                const petEmoji = selectedPetType === 'dog' ? '🐶' : '🐱';
+                
+                document.getElementById('result-title').textContent = `${petEmoji} ${petName} 매칭 결과`;
                 matchResults.innerHTML = "";
 
                 // 얼굴 분석 정보 표시
@@ -528,11 +712,15 @@ def home():
                     const analysisCard = document.createElement("div");
                     analysisCard.className = "match-card";
                     
-                    let analysisHtml = '<h4>📋 당신의 얼굴 분석</h4><div class="dog-details">';
+                    let analysisHtml = '<h4>📋 당신의 얼굴 분석</h4><div class="pet-details">';
                     analysisHtml += `<p><strong>얼굴형:</strong> ${data.face_analysis.face_type}</p>`;
                     
                     if (data.face_analysis.dominant_features && data.face_analysis.dominant_features.length > 0) {
                         analysisHtml += `<p><strong>주요 특징:</strong> ${data.face_analysis.dominant_features.join(', ')}</p>`;
+                    }
+                    
+                    if (data.face_analysis.recommendations && data.face_analysis.recommendations.length > 0) {
+                        analysisHtml += `<p><strong>추천:</strong> ${data.face_analysis.recommendations.join(', ')}</p>`;
                     }
                     
                     analysisHtml += '</div>';
@@ -548,12 +736,12 @@ def home():
                     card.className = "match-card";
 
                     card.innerHTML = `
-                        <div class="dog-info">
-                            <div class="dog-image-container">
-                                <img src="${match.image}" alt="${match.breed}" class="dog-image" 
-                                     onerror="this.style.display='none'; this.parentElement.innerHTML='🐕';">
+                        <div class="pet-info">
+                            <div class="pet-image-container">
+                                <img src="${match.image}" alt="${match.breed}" class="pet-image" 
+                                     onerror="this.style.display='none'; this.parentElement.innerHTML='${petEmoji}';">
                             </div>
-                            <div class="dog-details">
+                            <div class="pet-details">
                                 <div class="breed-name">${rank} ${match.breed}</div>
                                 <div class="breed-description">${match.description}</div>
                                 <div class="similarity-bar">
@@ -587,8 +775,8 @@ def home():
 # API 엔드포인트
 # =========================
 @app.post("/analyze-face")
-async def analyze_face(file: UploadFile = File(...)):
-    """얼굴 분석 및 강아지 매칭 API"""
+async def analyze_face(file: UploadFile = File(...), pet_type: str = Query("dog", regex="^(dog|cat)$")):
+    """얼굴 분석 및 펫 매칭 API"""
     try:
         # 파일 유효성 검사
         if not file.content_type or not file.content_type.startswith('image/'):
@@ -628,12 +816,13 @@ async def analyze_face(file: UploadFile = File(...)):
         # 얼굴 특징 분석
         landmarks = results.multi_face_landmarks[0].landmark
         human_features = analyze_face_features(landmarks)
-        matches = find_best_matches(human_features, top_n=3)
-        face_analysis = get_face_analysis(human_features)
+        matches = find_best_matches(human_features, pet_type=pet_type, top_n=3)
+        face_analysis = get_face_analysis(human_features, pet_type=pet_type)
         
         return {
             "success": True,
             "filename": file.filename,
+            "pet_type": pet_type,
             "human_features": human_features,
             "face_analysis": face_analysis,
             "matches": matches
@@ -648,30 +837,57 @@ async def analyze_face(file: UploadFile = File(...)):
 
 @app.post("/find_similar_dog")
 async def find_similar_dog(file: UploadFile = File(...)):
-    """기존 API 호환성을 위한 엔드포인트"""
-    return await analyze_face(file)
+    """기존 API 호환성을 위한 엔드포인트 (강아지만)"""
+    return await analyze_face(file, pet_type="dog")
 
 @app.get("/breeds")
-def get_breeds():
-    """강아지 품종 목록 조회"""
-    return {
-        "breeds": list(DOG_BREEDS.keys()),
-        "total_breeds": len(DOG_BREEDS),
-        "breed_details": DOG_BREEDS
-    }
+def get_breeds(type: str = Query("dog", regex="^(dog|cat)$")):
+    """펫 품종 목록 조회"""
+    if type == "dog":
+        return {
+            "type": "dog",
+            "breeds": list(DOG_BREEDS.keys()),
+            "total_breeds": len(DOG_BREEDS),
+            "breed_details": DOG_BREEDS
+        }
+    else:  # cat
+        return {
+            "type": "cat",
+            "breeds": list(CAT_BREEDS.keys()),
+            "total_breeds": len(CAT_BREEDS),
+            "breed_details": CAT_BREEDS
+        }
 
 @app.get("/health")
 def health_check():
     """헬스 체크 엔드포인트"""
-    return {"status": "healthy", "message": "강아지 닮은꼴 찾기 API가 정상 작동 중입니다!"}
+    return {
+        "status": "healthy", 
+        "message": "펫 닮은꼴 찾기 API가 정상 작동 중입니다!",
+        "supported_pets": ["dog", "cat"],
+        "total_breeds": {
+            "dogs": len(DOG_BREEDS),
+            "cats": len(CAT_BREEDS)
+        }
+    }
 
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="127.0.0.1", port=8000, reload=True)
 
-
-
 # 실행 방법:
 # uvicorn main:app --reload
 # 또는 python main.py
 # http://127.0.0.1:8000/ 에서 웹 인터페이스 사용
+
+# 필요한 디렉토리 구조:
+# project/
+# ├── main.py (이 파일)
+# ├── dog_image/ (강아지 이미지들)
+# │   ├── golden_retriever.png
+# │   ├── Shiba_Inu.png
+# │   └── ...
+# └── cat_image/ (고양이 이미지들)
+#     ├── persian.png
+#     ├── russian_blue.png
+#     └── ...
