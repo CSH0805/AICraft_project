@@ -26,7 +26,7 @@ if os.path.exists("cat_image"):
     app.mount("/static/cats", StaticFiles(directory="cat_image"), name="cats")
 
 # =========================
-# 강아지 데이터베이스
+# 강아지 데이터베이스 (파일명 수정)
 # =========================
 DOG_BREEDS = {
     "골든 리트리버": {
@@ -41,7 +41,7 @@ DOG_BREEDS = {
         "description": "도도하고 독립적인 성격의 일본 견종",
         "face_features": {"face_width": "narrow", "eye_shape": "narrow", "nose_size": "small", "mouth_width": "small", "face_length": "long"},
         "personality": ["도도함", "독립적", "영리함"],
-        "image": "/static/dogs/Shiba_Inu.png"
+        "image": "/static/dogs/Shiba_Inuong.png"  # 실제 파일명과 일치
     },
     "푸들": {
         "name": "푸들",
@@ -363,7 +363,7 @@ def get_face_analysis(features, pet_type="dog"):
     }
 
 # =========================
-# 웹페이지
+# 웹페이지 (JavaScript 수정)
 # =========================
 @app.get("/", response_class=HTMLResponse)
 def home():
@@ -451,6 +451,12 @@ def home():
             }
             .pet-image { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s ease; }
             .pet-image:hover { transform: scale(1.1); }
+            .fallback-placeholder {
+                width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
+                font-size: 3rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+                background-clip: text; font-weight: bold;
+            }
             .pet-details { flex: 1; min-width: 250px; }
             .breed-name { font-size: 1.4rem; font-weight: bold; margin-bottom: 8px; color: #333; }
             .breed-description { color: #666; margin-bottom: 12px; line-height: 1.4; }
@@ -537,7 +543,6 @@ def home():
                 </div>
                 
                 <div class="api-links">
-                    <a href="/docs" class="api-btn">📖 API 문서</a>
                     <a href="/breeds?type=dog" class="api-btn">🐕 강아지 품종</a>
                     <a href="/breeds?type=cat" class="api-btn">🐱 고양이 품종</a>
                 </div>
@@ -728,7 +733,7 @@ def home():
                     matchResults.appendChild(analysisCard);
                 }
 
-                // 매칭 결과 표시
+                // 매칭 결과 표시 (이미지 로드 오류 처리 개선)
                 data.matches.forEach((match, index) => {
                     const rank = index === 0 ? '🥇 1위' : index === 1 ? '🥈 2위' : '🥉 3위';
                     
@@ -739,7 +744,7 @@ def home():
                         <div class="pet-info">
                             <div class="pet-image-container">
                                 <img src="${match.image}" alt="${match.breed}" class="pet-image" 
-                                     onerror="this.style.display='none'; this.parentElement.innerHTML='${petEmoji}';">
+                                     onerror="handleImageError(this, '${match.breed}', '${petEmoji}')">
                             </div>
                             <div class="pet-details">
                                 <div class="breed-name">${rank} ${match.breed}</div>
@@ -766,13 +771,34 @@ def home():
                 results.style.display = 'block';
                 results.scrollIntoView({ behavior: 'smooth' });
             }
+
+            // 이미지 로드 실패시 처리 함수 (개선됨)
+            function handleImageError(img, breedName, petEmoji) {
+                console.log('이미지 로드 실패:', img.src, '품종:', breedName);
+                
+                // 이미지를 숨기고 대체 텍스트 표시
+                img.style.display = 'none';
+                
+                // 대체 요소 생성
+                const placeholder = document.createElement('div');
+                placeholder.className = 'fallback-placeholder';
+                placeholder.innerHTML = `
+                    <div style="text-align: center;">
+                        <div style="font-size: 2.5rem; margin-bottom: 8px;">${petEmoji}</div>
+                        <div style="font-size: 0.8rem; color: #666; font-weight: normal;">${breedName}</div>
+                    </div>
+                `;
+                
+                // 이미지 요소를 대체 요소로 교체
+                img.parentElement.appendChild(placeholder);
+            }
         </script>
     </body>
     </html>
     """
 
 # =========================
-# API 엔드포인트
+# API 엔드포인트들
 # =========================
 @app.post("/analyze-face")
 async def analyze_face(file: UploadFile = File(...), pet_type: str = Query("dog", regex="^(dog|cat)$")):
@@ -863,7 +889,7 @@ def health_check():
     """헬스 체크 엔드포인트"""
     return {
         "status": "healthy", 
-        "message": "펫 닮은꼴 찾기 API가 정상 작동 중입니다!",
+        "message": "펫 닮은꼴 찾기 API가 정상 작동 중입니다",
         "supported_pets": ["dog", "cat"],
         "total_breeds": {
             "dogs": len(DOG_BREEDS),
@@ -874,20 +900,7 @@ def health_check():
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="127.0.0.1", port=8000, reload=True)
-
 # 실행 방법:
 # uvicorn main:app --reload
 # 또는 python main.py
 # http://127.0.0.1:8000/ 에서 웹 인터페이스 사용
-
-# 필요한 디렉토리 구조:
-# project/
-# ├── main.py (이 파일)
-# ├── dog_image/ (강아지 이미지들)
-# │   ├── golden_retriever.png
-# │   ├── Shiba_Inu.png
-# │   └── ...
-# └── cat_image/ (고양이 이미지들)
-#     ├── persian.png
-#     ├── russian_blue.png
-#     └── ...
